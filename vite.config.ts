@@ -1,17 +1,21 @@
+// API middleware integrado ao Vite — sem servidor separado, sem proxy para porta 3001
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import type { Plugin, ViteDevServer } from 'vite';
 
-function apiMiddlewarePlugin(): Plugin {
+function apiMiddlewarePlugin(databaseUrl: string): Plugin {
   return {
     name: 'api-middleware',
     apply: 'serve',
     async configureServer(server: ViteDevServer) {
-      // Dynamically import to avoid Vite bundling Node.js-only modules
+      if (!databaseUrl) {
+        console.warn('[api] DATABASE_URL não configurada — rotas /api retornarão 503');
+      }
+
       const { neon } = await import('@neondatabase/serverless');
-      const sql = neon(process.env.DATABASE_URL || '');
+      const sql = databaseUrl ? neon(databaseUrl) : null;
 
       function json(res: any, status: number, data: any) {
         res.statusCode = status;
@@ -32,6 +36,10 @@ function apiMiddlewarePlugin(): Plugin {
 
       server.middlewares.use(async (req: any, res: any, next: any) => {
         if (!req.url?.startsWith('/api')) return next();
+
+        if (!sql) {
+          return json(res, 503, { error: 'DATABASE_URL não configurada. Adicione a variável nas configurações do projeto.' });
+        }
 
         const url = new URL(req.url, 'http://localhost');
         const p = url.pathname.replace(/^\/api/, '');
@@ -109,7 +117,7 @@ function apiMiddlewarePlugin(): Plugin {
             const id = p.split('/')[2];
             const items = await sql`SELECT * FROM schedule_items WHERE project_id=${id} ORDER BY sort_order`;
             const result = await Promise.all(items.map(async (item: any) => {
-              const tasks = await sql`SELECT * FROM schedule_tasks WHERE schedule_item_id=${item.id}`;
+              const tasks = await sql!`SELECT * FROM schedule_tasks WHERE schedule_item_id=${item.id}`;
               return { ...item, tasks };
             }));
             return json(res, 200, result);
@@ -281,7 +289,7 @@ function apiMiddlewarePlugin(): Plugin {
             res.statusCode = 204; res.end(); return;
           }
 
-          // ── EMPRESAS ───────────────────────────────────────────
+          // ── EMPRESAS ──────────────────────────────────────────
           if (method === 'GET' && p === '/companies') {
             const rows = await sql`SELECT * FROM companies ORDER BY name`;
             return json(res, 200, rows);
@@ -442,7 +450,6 @@ function apiMiddlewarePlugin(): Plugin {
             return json(res, 200, row);
           }
 
-          // Rota não encontrada
           return json(res, 404, { error: 'Rota não encontrada' });
 
         } catch (e: any) {
@@ -455,11 +462,13 @@ function apiMiddlewarePlugin(): Plugin {
 }
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, '.', '');
+  const env = loadEnv(mode, process.cwd(), '');
+  const dbUrl = env.DATABASE_URL || process.env.DATABASE_URL || '';
+
   return {
-    plugins: [react(), tailwindcss(), apiMiddlewarePlugin()],
+    plugins: [react(), tailwindcss(), apiMiddlewarePlugin(dbUrl)],
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || ''),
     },
     resolve: {
       alias: {
