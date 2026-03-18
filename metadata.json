@@ -1,0 +1,5 @@
+{
+  "name": "Gestor de Obras",
+  "description": "Dashboard de acompanhamento de obra para a LVF Empreendimentos, com progresso físico, documentação e contratos.",
+  "requestFramePermissions": []
+}
