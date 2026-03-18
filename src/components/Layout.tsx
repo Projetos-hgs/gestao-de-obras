@@ -5,7 +5,7 @@ import {
   FileSignature, Building2, FileText, ShieldAlert, Award,
   FileCheck, TrendingUp, MoreHorizontal
 } from 'lucide-react';
-import type { NavItem } from './types';
+import type { NavItem } from '../types';
 
 export const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard',    label: 'Dashboard',    icon: LayoutDashboard, category: 'VISÃO GERAL', path: '/' },
