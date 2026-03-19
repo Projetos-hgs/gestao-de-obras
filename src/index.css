@@ -1,1 +1,31 @@
 @import "tailwindcss";
+
+@theme inline {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', monospace;
+
+  --color-background: #121418;
+  --color-foreground: #d4d4d8;
+  --color-border: rgba(255,255,255,0.07);
+  --color-card: #1C1F26;
+  --color-muted: #71717a;
+}
+
+/* reset: tela escura por padrão */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #121418;
+  color: #d4d4d8;
+}
+
+/* scrollbar discreta */
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.08); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { Sidebar, Header } from './components/Layout';
+import React, { useEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import { Sidebar, Header, NAV_ITEMS } from './components/Layout';
 import { DashboardPage }  from './components/DashboardPage';
 import { TAPPage }        from './components/TAPPage';
 import { CronogramaPage } from './components/CronogramaPage';
@@ -23,9 +23,24 @@ import {
   QualidadePage,
 } from './components/OtherPages';
 
+function TitleUpdater() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const active = NAV_ITEMS.find(item =>
+      item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path)
+    );
+    const label = active?.label ?? 'Dashboard';
+    document.title = `Gestor de Obras - ${label}`;
+  }, [location.pathname]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <div className="min-h-screen bg-[#121418] text-zinc-300 font-sans flex">
+      <TitleUpdater />
       <Sidebar />
 
       <div className="flex-1 ml-64 min-h-screen flex flex-col">
