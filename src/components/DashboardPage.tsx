@@ -404,10 +404,7 @@ export function DashboardPage() {
         </div>
 
         {milestones.length === 0 && schedule.length === 0 ? (
-          <p className="text-xs text-zinc-600 text-center py-8">
-            Nenhum marco ou etapa cadastrada.
-            <button onClick={() => navigate('/tap')} className="text-blue-400 hover:underline ml-1">Adicionar no TAP</button>
-          </p>
+          <p className="text-xs text-zinc-600 text-center py-4">Cadastre marcos no TAP ou etapas no Cronograma para visualizar o progresso aqui.</p>
         ) : (
           <div className="space-y-4">
             {/* Progresso do cronograma */}
