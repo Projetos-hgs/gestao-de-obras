@@ -143,9 +143,17 @@ function apiPlugin(): Plugin {
           if (m === 'PUT' && /^\/schedule\/[^/]+$/.test(p)) {
             const id = p.split('/')[2];
             const b = await readBody(req);
+            // Busca valores atuais para não sobrescrever campos não enviados
+            const [cur] = await sql`SELECT * FROM schedule_items WHERE id=${id}`;
+            if (!cur) return json(404, { error: 'Item não encontrado' });
             const [row] = await sql`
-              UPDATE schedule_items SET name=${b.name},progress=${b.progress},color=${b.color},
-                is_milestone=${b.is_milestone},sort_order=${b.sort_order},updated_at=NOW()
+              UPDATE schedule_items
+              SET name=${b.name ?? cur.name},
+                  progress=${b.progress ?? cur.progress},
+                  color=${b.color ?? cur.color},
+                  is_milestone=${b.is_milestone ?? cur.is_milestone},
+                  sort_order=${b.sort_order ?? cur.sort_order},
+                  updated_at=NOW()
               WHERE id=${id} RETURNING *`;
             return json(200, row);
           }
@@ -472,9 +480,10 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modify — file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
+    },
+    optimizeDeps: {
+      force: true,
     },
   };
 });
