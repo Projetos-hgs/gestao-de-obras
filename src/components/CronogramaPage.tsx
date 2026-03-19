@@ -94,14 +94,37 @@ function ProgressRow({
   );
 }
 
-/* ══════════════════════════════════════════════════════════════ */
-export function CronogramaPage() {
+/* ── Badge de status colorido ── */
+function StatusBadge({ status }: { status: string }) {
+  const s = status?.toLowerCase() ?? '';
+  let cls = '';
+  let label = status;
+
+  if (s === 'emitido')                                  { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; }
+  else if (s.includes('rrt') || s.includes('art'))     { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; label = s.includes('rrt') ? 'COM RRT' : 'COM ART'; }
+  else if (s === 'aprovado')                            { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; }
+  else if (s === 'em elaboração' || s === 'elaboracao') { cls = 'bg-amber-500/15 text-amber-400 border-amber-500/30'; label = 'EM ELABORAÇÃO'; }
+  else if (s.includes('boleto'))                        { cls = 'bg-red-500/15 text-red-400 border-red-500/30'; label = 'AG. BOLETO PAGAMENTO'; }
+  else if (s.includes('envio'))                         { cls = 'bg-red-500/15 text-red-400 border-red-500/30'; label = 'AG. ENVIO DO PROJETO'; }
+  else if (s.includes('aguardando'))                    { cls = 'bg-blue-500/15 text-blue-400 border-blue-500/30'; label = 'AGUARDANDO ÓRGÃO'; }
+  else if (s === 'pendente')                            { cls = 'bg-amber-500/15 text-amber-400 border-amber-500/30'; label = 'PENDENTE'; }
+  else                                                  { cls = 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30'; }
+
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [project, setProject] = useState<Project | null>(null);
   const [items, setItems] = useState<ScheduleItem[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [legalDocs, setLegalDocs] = useState<LegalDocument[]>([]);
+  const [techDocs, setTechDocs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'progress' | 'docs' | 'contracts'>('progress');
   const [adding, setAdding] = useState(false);
@@ -125,11 +148,13 @@ export function CronogramaPage() {
       api.schedule.list(projectId),
       api.contracts.list(projectId),
       api.legalDocs.list(projectId),
-    ]).then(([proj, sched, contr, legal]) => {
+      api.technicalProjects.list(projectId),
+    ]).then(([proj, sched, contr, legal, tech]) => {
       setProject(proj);
       setItems(sched);
       setContracts(contr);
       setLegalDocs(legal);
+      setTechDocs(tech);
     }).catch(err => console.error('[v0]', err))
       .finally(() => setLoading(false));
   }, [projectId]);
@@ -365,44 +390,65 @@ export function CronogramaPage() {
 
       {/* ── ABA: Documentação ── */}
       {activeTab === 'docs' && (
-        <div className="bg-[#181B22] border border-white/5 rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-white/5">
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Documentação Legal</p>
-          </div>
-          {legalDocs.length === 0 ? (
-            <EmptyState message="Nenhum documento cadastrado." />
-          ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-white/5">
-                  {['Documento', 'Órgão', 'Solicitado', 'Enviado', 'Status'].map(h => (
-                    <th key={h} className="px-4 py-2.5 text-left text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {legalDocs.map(doc => (
-                  <tr key={doc.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
-                    <td className="px-4 py-3 text-zinc-200 font-medium">{doc.document}</td>
-                    <td className="px-4 py-3 text-zinc-400">{doc.organization}</td>
-                    <td className="px-4 py-3 text-zinc-500">{fmtDate(doc.requested_date)}</td>
-                    <td className="px-4 py-3 text-zinc-500">{fmtDate(doc.sent_date)}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                        doc.status === 'aprovado' || doc.status === 'Aprovado'
-                          ? 'bg-emerald-500/10 text-emerald-400'
-                          : doc.status === 'pendente' || doc.status === 'Pendente'
-                          ? 'bg-amber-500/10 text-amber-400'
-                          : 'bg-zinc-500/10 text-zinc-400'
-                      }`}>
-                        {doc.status}
-                      </span>
-                    </td>
-                  </tr>
+        <div className="space-y-6">
+
+          {/* ── Projetos Técnicos ── */}
+          <div>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
+              Projetos Técnicos
+            </p>
+            {techDocs.length === 0 ? (
+              <EmptyState message="Nenhum projeto técnico cadastrado." />
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                {techDocs.map(doc => (
+                  <div
+                    key={doc.id}
+                    className="bg-[#181B22] border border-white/5 hover:border-white/10 rounded-xl p-4 flex flex-col gap-2 transition-colors"
+                  >
+                    <p className="text-sm font-bold text-white leading-snug">{doc.name}</p>
+                    <p className="text-[11px] text-zinc-500 leading-snug">
+                      {doc.responsible}
+                      {doc.version && ` · ${doc.version}`}
+                      {doc.date && ` · ${fmtDate(doc.date)}`}
+                    </p>
+                    <div className="mt-auto pt-1">
+                      <StatusBadge status={doc.status} />
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          )}
+              </div>
+            )}
+          </div>
+
+          {/* ── Licenças e Aprovações Legais ── */}
+          <div>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
+              Licenças e Aprovações Legais
+            </p>
+            {legalDocs.length === 0 ? (
+              <EmptyState message="Nenhum documento legal cadastrado." />
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                {legalDocs.map(doc => (
+                  <div
+                    key={doc.id}
+                    className="bg-[#181B22] border border-white/5 hover:border-white/10 rounded-xl p-4 flex flex-col gap-2 transition-colors"
+                  >
+                    <p className="text-sm font-bold text-white leading-snug">{doc.document}</p>
+                    <p className="text-[11px] text-zinc-500 leading-snug">
+                      {doc.organization}
+                      {doc.sent_date && ` · enviado ${fmtDate(doc.sent_date)}`}
+                    </p>
+                    <div className="mt-auto pt-1">
+                      <StatusBadge status={doc.status} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
         </div>
       )}
 
