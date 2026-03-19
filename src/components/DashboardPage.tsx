@@ -231,6 +231,7 @@ export function DashboardPage() {
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [loadingData, setLoadingData]         = useState(false);
   const [showNewTAP, setShowNewTAP]           = useState(false);
+  const [showProjectDropdown, setShowProjectDropdown] = useState(false);
 
   /* carrega lista de projetos uma única vez */
   useEffect(() => {
@@ -330,26 +331,54 @@ export function DashboardPage() {
       {/* ── Header ── */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-xl font-bold text-white">Dashboard</h1>
+          <h1 className="text-xl font-bold text-white">
+            {project?.name ?? 'Dashboard'}
+          </h1>
 
-          {/* seletor de obra — sempre visível se há projetos */}
+          {/* dropdown de troca de projeto */}
           <div className="relative">
-            <select
-              value={selectedProjectId ?? ''}
-              onChange={e => setSelectedProjectId(Number(e.target.value))}
+            <button
+              onClick={() => setShowProjectDropdown(v => !v)}
               disabled={loadingData}
-              className="appearance-none bg-[#1C1F26] border border-white/10 hover:border-blue-500/40 rounded-lg pl-3 pr-8 py-1.5 text-xs font-semibold text-zinc-200 focus:outline-none focus:border-blue-500/60 transition-colors cursor-pointer disabled:opacity-60"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1C1F26] border border-white/10 hover:border-blue-500/40 rounded-lg text-[11px] font-bold text-blue-400 hover:text-blue-300 uppercase tracking-wider transition-all disabled:opacity-50"
             >
-              {projects.map(p => (
-                <option key={p.id} value={p.id} className="bg-[#1C1F26]">
-                  {p.name}
-                </option>
-              ))}
-            </select>
-            <ChevronRight
-              size={12}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 rotate-90 pointer-events-none"
-            />
+              <ChevronRight size={11} className={`transition-transform ${showProjectDropdown ? '-rotate-90' : 'rotate-90'}`} />
+              Trocar Projeto
+            </button>
+
+            {showProjectDropdown && (
+              <>
+                {/* overlay para fechar ao clicar fora */}
+                <div className="fixed inset-0 z-40" onClick={() => setShowProjectDropdown(false)} />
+
+                <div className="absolute left-0 top-full mt-2 z-50 w-64 bg-[#1C1F26] border border-white/10 rounded-xl shadow-2xl shadow-black/50 overflow-hidden">
+                  <p className="px-4 pt-3 pb-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                    Selecione o Projeto
+                  </p>
+                  <div className="pb-2">
+                    {projects.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          setSelectedProjectId(p.id);
+                          setShowProjectDropdown(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors ${
+                          p.id === selectedProjectId
+                            ? 'bg-blue-600/20 text-white font-semibold'
+                            : 'text-zinc-300 hover:bg-white/5'
+                        }`}
+                      >
+                        <span className="truncate text-left">{p.name}</span>
+                        {p.id === selectedProjectId && (
+                          <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 ml-2" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {loadingData && (
