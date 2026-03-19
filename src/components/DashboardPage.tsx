@@ -59,7 +59,6 @@ function NewTAPModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
     setSaving(true);
     setError('');
     try {
-      console.log('[v0] Criando projeto:', form.name);
       const created = await api.projects.create({
         name: form.name.trim(),
         start_date: form.start_date || null,
@@ -71,7 +70,6 @@ function NewTAPModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
         budget: form.budget || null,
         status: 'Em andamento',
       });
-      console.log('[v0] Projeto criado:', created);
 
       const objectives   = form.objectives.split('\n').map(s => s.trim()).filter(Boolean);
       const requirements = form.requirements.split('\n').map(s => s.trim()).filter(Boolean);
@@ -86,16 +84,13 @@ function NewTAPModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
             : { date: '', description: line };
         });
 
-      console.log('[v0] Salvando TAP para id:', created.id);
       await api.projects.updateTap(String(created.id), {
         objectives, requirements, tapRisks, stakeholders, milestones,
       });
-      console.log('[v0] TAP salvo com sucesso');
 
       onSaved();
       onClose();
     } catch (e: any) {
-      console.error('[v0] Erro ao salvar TAP:', e);
       setError(e.message || 'Erro ao salvar.');
     } finally {
       setSaving(false);
