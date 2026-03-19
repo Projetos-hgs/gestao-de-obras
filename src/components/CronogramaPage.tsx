@@ -39,14 +39,14 @@ function StatusBadge({ status }: { status: string }) {
   const s = (status ?? '').toLowerCase();
   let cls = 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30';
   let label = status;
-  if (s === 'emitido' || s === 'aprovado')              { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; }
-  else if (s.includes('com rrt') || s === 'rrt')        { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; label = 'COM RRT'; }
-  else if (s.includes('com art') || s === 'art')        { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; label = 'COM ART'; }
-  else if (s === 'em elaboração' || s === 'elaboracao') { cls = 'bg-amber-500/15 text-amber-400 border-amber-500/30'; label = 'EM ELABORAÇÃO'; }
-  else if (s.includes('boleto'))                        { cls = 'bg-red-500/15 text-red-400 border-red-500/30'; label = 'AG. BOLETO PAGAMENTO'; }
-  else if (s.includes('envio'))                         { cls = 'bg-red-500/15 text-red-400 border-red-500/30'; label = 'AG. ENVIO DO PROJETO'; }
-  else if (s.includes('aguardando'))                    { cls = 'bg-blue-500/15 text-blue-400 border-blue-500/30'; label = 'AGUARDANDO ÓRGÃO'; }
-  else if (s === 'pendente')                            { cls = 'bg-amber-500/15 text-amber-400 border-amber-500/30'; label = 'PENDENTE'; }
+  if (s === 'emitido' || s === 'aprovado')               cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
+  else if (s.includes('com rrt') || s === 'rrt')       { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; label = 'COM RRT'; }
+  else if (s.includes('com art') || s === 'art')       { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; label = 'COM ART'; }
+  else if (s === 'em elaboração' || s === 'elaboracao'){ cls = 'bg-amber-500/15 text-amber-400 border-amber-500/30'; label = 'EM ELABORAÇÃO'; }
+  else if (s.includes('boleto'))                       { cls = 'bg-red-500/15 text-red-400 border-red-500/30'; label = 'AG. BOLETO PAGAMENTO'; }
+  else if (s.includes('envio'))                        { cls = 'bg-red-500/15 text-red-400 border-red-500/30'; label = 'AG. ENVIO DO PROJETO'; }
+  else if (s.includes('aguardando'))                   { cls = 'bg-blue-500/15 text-blue-400 border-blue-500/30'; label = 'AGUARDANDO ÓRGÃO'; }
+  else if (s === 'pendente')                           { cls = 'bg-amber-500/15 text-amber-400 border-amber-500/30'; label = 'PENDENTE'; }
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${cls}`}>
       {label}
@@ -88,14 +88,14 @@ export function CronogramaPage() {
       setContracts(contr);
       setLegalDocs(legal);
       setTechDocs(tech);
-    }).catch(err => console.error('[v0]', err))
+    }).catch(err => console.error('[api]', err))
       .finally(() => setLoading(false));
   }, [selId]);
 
   async function updateProgress(id: string, value: number) {
-    setItems(prev => prev.map(i => i.id === String(id) ? { ...i, progress: value } : i));
+    setItems(prev => prev.map(i => i.id === id ? { ...i, progress: value } : i));
     try { await api.schedule.update(id, { progress: value }); }
-    catch (e) { console.error('[v0] updateProgress:', e); }
+    catch (e) { console.error('[schedule]', e); }
   }
 
   const avgProgress = items.length
@@ -116,6 +116,7 @@ export function CronogramaPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
 
+      {/* ── Header do projeto ── */}
       <div className="space-y-1">
         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">VP Construtora</p>
         <div className="flex items-start justify-between gap-3">
@@ -143,25 +144,26 @@ export function CronogramaPage() {
             ))}
           </select>
         )}
-        <p className="text-[11px] text-zinc-500 pt-1">
-          {project?.cno && <span className="mr-3">CNO {project.cno}</span>}
-          {project?.start_date && <span className="mr-3">Início: {fmtDate(project.start_date)}</span>}
-          {project?.area && <span className="mr-3">Área: {project.area}</span>}
-          {project?.manager && <span>Resp: {project.manager}</span>}
+        <p className="text-[11px] text-zinc-500 pt-1 flex flex-wrap gap-x-3">
+          {project?.cno        && <span>CNO {project.cno}</span>}
+          {project?.start_date && <span>Início: {fmtDate(project.start_date)}</span>}
+          {project?.area       && <span>Área: {project.area}</span>}
+          {project?.manager    && <span>Resp: {project.manager}</span>}
         </p>
       </div>
 
+      {/* ── KPI Cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="bg-[#1C1F26] border border-emerald-500/20 rounded-xl p-4 flex flex-col gap-1">
           <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Etapa Atual</p>
-          <p className="text-lg font-black text-white leading-tight">{topItems[0]?.name ?? '—'}</p>
+          <p className="text-base font-black text-white leading-tight truncate">{topItems[0]?.name ?? '—'}</p>
           <p className="text-[10px] text-zinc-500">{topItems[0] ? `${topItems[0].progress}% concluído` : 'Sem etapas'}</p>
         </div>
         {topItems.slice(0, 3).map((item, idx) => {
           const col = progressColor(item.progress);
           const labels = ['Em andamento', 'Quase concluído', 'Iniciada'];
           return (
-            <div key={item.id} className="bg-[#1C1F26] border border-white/5 rounded-xl p-4 flex flex-col gap-1" style={{ borderTopColor: col, borderTopWidth: 2 }}>
+            <div key={item.id} className="bg-[#1C1F26] border-t-2 border border-white/5 rounded-xl p-4 flex flex-col gap-1" style={{ borderTopColor: col }}>
               <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest truncate">{item.name}</p>
               <p className="text-2xl font-black" style={{ color: col }}>{item.progress}%</p>
               <p className="text-[10px] text-zinc-500">{labels[idx]}</p>
@@ -170,7 +172,7 @@ export function CronogramaPage() {
         })}
         <div className="bg-[#1C1F26] border border-white/5 rounded-xl p-4 flex flex-col gap-1">
           <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Maior Contrato</p>
-          <p className="text-lg font-black text-white leading-tight">{fmtBudget(bigContract?.value)}</p>
+          <p className="text-base font-black text-white leading-tight">{fmtBudget(bigContract?.value)}</p>
           <p className="text-[10px] text-zinc-500 truncate">{bigContract?.company ?? '—'}</p>
         </div>
         <div className="bg-[#1C1F26] border border-white/5 rounded-xl p-4 flex flex-col gap-1">
@@ -180,6 +182,7 @@ export function CronogramaPage() {
         </div>
       </div>
 
+      {/* ── Abas ── */}
       <div className="flex items-center gap-1 border-b border-white/5">
         {([
           { key: 'progress',  label: 'Progresso físico' },
@@ -200,6 +203,7 @@ export function CronogramaPage() {
         ))}
       </div>
 
+      {/* ── Progresso Físico ── */}
       {activeTab === 'progress' && (
         <div className="space-y-2">
           <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">
@@ -214,10 +218,15 @@ export function CronogramaPage() {
                   <div key={item.id} className="group flex items-center gap-4 px-4 py-3 bg-[#181B22] border border-white/5 rounded-lg hover:border-white/10 transition-colors">
                     <span className="w-52 flex-shrink-0 text-sm font-semibold text-zinc-200 truncate">{item.name}</span>
                     <div className="flex-1 relative h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                      <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-300" style={{ width: `${pct}%`, backgroundColor: color }} />
+                      <div
+                        className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"
+                        style={{ width: `${pct}%`, backgroundColor: color }}
+                      />
                     </div>
-                    <div className="flex items-center gap-2 w-20 justify-end">
-                      <span className="text-xs font-bold" style={{ color: pct > 0 ? color : '#52525b' }}>{pct}%</span>
+                    <div className="flex items-center gap-2 w-24 justify-end">
+                      <span className="text-xs font-bold tabular-nums" style={{ color: pct > 0 ? color : '#52525b' }}>
+                        {pct}%
+                      </span>
                       <input
                         type="range" min={0} max={100} step={5} value={pct}
                         onChange={e => updateProgress(item.id, Number(e.target.value))}
@@ -237,6 +246,7 @@ export function CronogramaPage() {
         </div>
       )}
 
+      {/* ── Documentação ── */}
       {activeTab === 'docs' && (
         <div className="space-y-6">
           <div>
@@ -249,7 +259,9 @@ export function CronogramaPage() {
                     <div key={doc.id} className="bg-[#181B22] border border-white/5 hover:border-white/10 rounded-xl p-4 flex flex-col gap-2 transition-colors">
                       <p className="text-sm font-bold text-white leading-snug">{doc.name}</p>
                       <p className="text-[11px] text-zinc-500 leading-snug">
-                        {doc.responsible}{doc.version && ` · ${doc.version}`}{doc.date && ` · ${fmtDate(doc.date)}`}
+                        {doc.responsible}
+                        {doc.version && ` · ${doc.version}`}
+                        {doc.date && ` · ${fmtDate(doc.date)}`}
                       </p>
                       <div className="mt-auto pt-1"><StatusBadge status={doc.status} /></div>
                     </div>
@@ -268,7 +280,8 @@ export function CronogramaPage() {
                     <div key={doc.id} className="bg-[#181B22] border border-white/5 hover:border-white/10 rounded-xl p-4 flex flex-col gap-2 transition-colors">
                       <p className="text-sm font-bold text-white leading-snug">{doc.document}</p>
                       <p className="text-[11px] text-zinc-500 leading-snug">
-                        {doc.organization}{doc.sent_date && ` · enviado ${fmtDate(doc.sent_date)}`}
+                        {doc.organization}
+                        {doc.sent_date && ` · enviado ${fmtDate(doc.sent_date)}`}
                       </p>
                       <div className="mt-auto pt-1"><StatusBadge status={doc.status} /></div>
                     </div>
@@ -280,6 +293,7 @@ export function CronogramaPage() {
         </div>
       )}
 
+      {/* ── Contratos ── */}
       {activeTab === 'contracts' && (
         <div>
           <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">Prestadores e Contratos</p>
@@ -298,41 +312,27 @@ export function CronogramaPage() {
                   <tbody>
                     {contracts.map((c, i) => {
                       const rawSigned = (c as any).signed;
-                      const signed = rawSigned === true || rawSigned === 'true' || rawSigned === 'sim' ? true
-                        : rawSigned === false || rawSigned === 'false' || rawSigned === 'nao' || rawSigned === 'não' ? false
-                        : null;
+                      const signed =
+                        rawSigned === true  || rawSigned === 'true'  || rawSigned === 'sim' ? true :
+                        rawSigned === false || rawSigned === 'false' || rawSigned === 'nao' || rawSigned === 'não' ? false :
+                        null;
                       const hasValue = c.value && parseFloat(c.value) > 0;
-                      const prazo = (c as any).duration_days
-                        ? `${(c as any).duration_days} dias`
-                        : c.deadline ? fmtDate(c.deadline) : null;
-                      const pagamento = (c as any).installments
-                        ? `${(c as any).installments} parcelas`
-                        : (c as any).payment_terms ?? null;
+                      const prazo    = (c as any).duration_days ? `${(c as any).duration_days} dias` : c.deadline ? fmtDate(c.deadline) : null;
+                      const pagamento = (c as any).installments ? `${(c as any).installments} parcelas` : (c as any).payment_terms ?? null;
                       return (
                         <tr key={c.id} className={`border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors ${i % 2 === 0 ? 'bg-[#16191F]' : 'bg-[#181B22]'}`}>
                           <td className="px-4 py-3.5 font-bold text-white whitespace-nowrap">{c.company}</td>
                           <td className="px-4 py-3.5 text-zinc-400 max-w-xs">{c.scope || '—'}</td>
                           <td className="px-4 py-3.5">
-                            {signed === true ? (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">SIM</span>
-                            ) : signed === false ? (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">NÃO</span>
-                            ) : (
-                              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-zinc-800 text-zinc-500 text-xs">–</span>
-                            )}
+                            {signed === true  && <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">SIM</span>}
+                            {signed === false && <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">NÃO</span>}
+                            {signed === null  && <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-zinc-800 text-zinc-500 text-xs">–</span>}
                           </td>
                           <td className="px-4 py-3.5 font-bold whitespace-nowrap">
-                            {hasValue
-                              ? <span className="text-emerald-400">{fmtBudget(c.value)}</span>
-                              : <span className="text-zinc-600">—</span>
-                            }
+                            {hasValue ? <span className="text-emerald-400">{fmtBudget(c.value)}</span> : <span className="text-zinc-600">—</span>}
                           </td>
-                          <td className="px-4 py-3.5 text-zinc-400 whitespace-nowrap">
-                            {pagamento ?? <span className="text-zinc-600">—</span>}
-                          </td>
-                          <td className="px-4 py-3.5 text-zinc-400 whitespace-nowrap">
-                            {prazo ?? <span className="text-zinc-600">—</span>}
-                          </td>
+                          <td className="px-4 py-3.5 text-zinc-400 whitespace-nowrap">{pagamento ?? <span className="text-zinc-600">—</span>}</td>
+                          <td className="px-4 py-3.5 text-zinc-400 whitespace-nowrap">{prazo ?? <span className="text-zinc-600">—</span>}</td>
                         </tr>
                       );
                     })}

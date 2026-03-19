@@ -82,26 +82,33 @@ export async function createApiRouter() {
   router.put('/projects/:id/tap', async (req, res) => {
     try {
       const { id } = req.params;
-      const { objectives, requirements, tapRisks, stakeholders, milestones } = req.body;
-      await sql`DELETE FROM project_objectives WHERE project_id=${id}`;
+      const { objectives = [], requirements = [], tapRisks = [], stakeholders = [], milestones = [] } = req.body;
+
+      // Limpa e reinsere (estratégia replace-all)
+      await sql`DELETE FROM project_objectives   WHERE project_id=${id}`;
       await sql`DELETE FROM project_requirements WHERE project_id=${id}`;
-      await sql`DELETE FROM project_tap_risks WHERE project_id=${id}`;
+      await sql`DELETE FROM project_tap_risks    WHERE project_id=${id}`;
       await sql`DELETE FROM project_stakeholders WHERE project_id=${id}`;
-      await sql`DELETE FROM project_milestones WHERE project_id=${id}`;
-      if (objectives?.length) for (let i = 0; i < objectives.length; i++)
+      await sql`DELETE FROM project_milestones   WHERE project_id=${id}`;
+
+      for (let i = 0; i < objectives.length; i++)
         await sql`INSERT INTO project_objectives (project_id, text, sort_order) VALUES (${id}, ${objectives[i]}, ${i})`;
-      if (requirements?.length) for (let i = 0; i < requirements.length; i++)
+      for (let i = 0; i < requirements.length; i++)
         await sql`INSERT INTO project_requirements (project_id, text, sort_order) VALUES (${id}, ${requirements[i]}, ${i})`;
-      if (tapRisks?.length) for (let i = 0; i < tapRisks.length; i++)
+      for (let i = 0; i < tapRisks.length; i++)
         await sql`INSERT INTO project_tap_risks (project_id, text, sort_order) VALUES (${id}, ${tapRisks[i]}, ${i})`;
-      if (stakeholders?.length) for (const s of stakeholders)
+      for (const s of stakeholders)
         await sql`INSERT INTO project_stakeholders (project_id, name) VALUES (${id}, ${s})`;
-      if (milestones?.length) for (let i = 0; i < milestones.length; i++) {
+      for (let i = 0; i < milestones.length; i++) {
         const m = milestones[i];
-        await sql`INSERT INTO project_milestones (project_id, date, description, sort_order) VALUES (${id}, ${m.date}, ${m.description}, ${i})`;
+        await sql`INSERT INTO project_milestones (project_id, date, description, sort_order) VALUES (${id}, ${m.date ?? ''}, ${m.description ?? ''}, ${i})`;
       }
+
       res.json({ success: true });
-    } catch (e: any) { res.status(500).json({ error: e.message }); }
+    } catch (e: any) {
+      console.error('[api] PUT /projects/:id/tap error:', e.message);
+      res.status(500).json({ error: e.message });
+    }
   });
 
   // ============================================================
@@ -136,9 +143,20 @@ export async function createApiRouter() {
     try {
       const { itemId } = req.params;
       const { name, progress, color, is_milestone, sort_order } = req.body;
+
+      // Busca o item atual para não sobrescrever campos não enviados
+      const [current] = await sql`SELECT * FROM schedule_items WHERE id=${itemId}`;
+      if (!current) return res.status(404).json({ error: 'Item não encontrado' });
+
       const [item] = await sql`
-        UPDATE schedule_items SET name=${name}, progress=${progress}, color=${color},
-          is_milestone=${is_milestone}, sort_order=${sort_order}, updated_at=NOW()
+        UPDATE schedule_items
+        SET
+          name        = ${name          ?? current.name},
+          progress    = ${progress      ?? current.progress},
+          color       = ${color         ?? current.color},
+          is_milestone= ${is_milestone  ?? current.is_milestone},
+          sort_order  = ${sort_order    ?? current.sort_order},
+          updated_at  = NOW()
         WHERE id=${itemId} RETURNING *
       `;
       res.json(item);
