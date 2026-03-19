@@ -8,7 +8,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import { Sidebar, Header, NAV_ITEMS } from './components/Layout';
 import { DashboardPage }  from './components/DashboardPage';
 import { TAPPage }        from './components/TAPPage';
-import { CronogramaPage } from './components/CronogramaPage';
+import { CronogramaView as CronogramaPage } from './components/CronogramaView';
 import { RDOPage }        from './components/RDOPage';
 import {
   EquipePage,

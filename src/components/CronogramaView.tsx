@@ -20,14 +20,14 @@ function progressColor(p: number) {
   if (p >= 30) return '#f59e0b';
   return '#3b82f6';
 }
-function LoadingSpinner() {
+function Spinner() {
   return (
     <div className="flex items-center justify-center h-48">
       <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
 }
-function EmptyState({ message }: { message: string }) {
+function Empty({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-zinc-600">
       <FileText size={28} className="mb-2 opacity-40" />
@@ -35,7 +35,7 @@ function EmptyState({ message }: { message: string }) {
     </div>
   );
 }
-function StatusBadge({ status }: { status: string }) {
+function Badge({ status }: { status: string }) {
   const s = (status ?? '').toLowerCase();
   let cls = 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30';
   let label = status;
@@ -54,7 +54,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export function CronogramaPage() {
+export function CronogramaView() {
   const [projects, setProjects]   = useState<Project[]>([]);
   const [selId, setSelId]         = useState<string | null>(null);
   const [project, setProject]     = useState<Project | null>(null);
@@ -63,7 +63,7 @@ export function CronogramaPage() {
   const [legalDocs, setLegalDocs] = useState<LegalDocument[]>([]);
   const [techDocs, setTechDocs]   = useState<any[]>([]);
   const [loading, setLoading]     = useState(true);
-  const [activeTab, setActiveTab] = useState<'progress' | 'docs' | 'contracts'>('progress');
+  const [tab, setTab]             = useState<'progress' | 'docs' | 'contracts'>('progress');
 
   useEffect(() => {
     api.projects.list()
@@ -86,11 +86,11 @@ export function CronogramaPage() {
       api.technicalProjects.list(selId),
     ])
       .then(([proj, sched, contr, legal, tech]) => {
-        setProject(proj);
-        setItems(sched);
-        setContracts(contr);
-        setLegalDocs(legal);
-        setTechDocs(tech);
+        setProject(proj as Project);
+        setItems(sched as ScheduleItem[]);
+        setContracts(contr as Contract[]);
+        setLegalDocs(legal as LegalDocument[]);
+        setTechDocs(tech as any[]);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -101,32 +101,30 @@ export function CronogramaPage() {
     try { await api.schedule.update(id, { progress: value }); } catch {}
   }
 
-  const avgProgress = items.length
+  const avg = items.length
     ? Math.round(items.reduce((s, i) => s + (i.progress ?? 0), 0) / items.length) : 0;
-  const topItems = [...items].sort((a, b) => (b.progress ?? 0) - (a.progress ?? 0)).slice(0, 3);
+  const topItems    = [...items].sort((a, b) => (b.progress ?? 0) - (a.progress ?? 0)).slice(0, 3);
   const bigContract = contracts.length
-    ? contracts.reduce((m, c) =>
-        parseFloat(c.value || '0') > parseFloat(m.value || '0') ? c : m, contracts[0])
+    ? contracts.reduce((m, c) => parseFloat(c.value || '0') > parseFloat(m.value || '0') ? c : m, contracts[0])
     : null;
-  const pendingDocs =
+  const pending =
     legalDocs.filter(d => d.status?.toLowerCase() === 'pendente').length +
     techDocs.filter(d => d.status?.toLowerCase() === 'pendente').length;
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) return <Spinner />;
 
-  const nameParts = (project?.name ?? '').split(' ');
-  const nameFirst = nameParts[0] ?? '';
-  const nameRest  = nameParts.slice(1).join(' ');
+  const parts = (project?.name ?? '').split(' ');
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
 
+      {/* Header */}
       <div className="space-y-1">
         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">VP Construtora</p>
         <div className="flex items-start justify-between gap-3">
           <h1 className="text-3xl font-black leading-tight">
-            <span className="text-white">{nameFirst} </span>
-            <span className="text-emerald-400">{nameRest}</span>
+            <span className="text-white">{parts[0]} </span>
+            <span className="text-emerald-400">{parts.slice(1).join(' ')}</span>
           </h1>
           <span className={`flex-shrink-0 mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border ${
             (project?.status ?? '').toLowerCase().includes('anda')
@@ -156,20 +154,18 @@ export function CronogramaPage() {
         </p>
       </div>
 
+      {/* KPI cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="bg-[#1C1F26] border border-emerald-500/20 rounded-xl p-4 flex flex-col gap-1">
           <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Etapa Atual</p>
           <p className="text-lg font-black text-white leading-tight">{topItems[0]?.name ?? '—'}</p>
-          <p className="text-[10px] text-zinc-500">
-            {topItems[0] ? `${topItems[0].progress}% concluído` : 'Sem etapas'}
-          </p>
+          <p className="text-[10px] text-zinc-500">{topItems[0] ? `${topItems[0].progress}% concluído` : 'Sem etapas'}</p>
         </div>
         {topItems.slice(0, 3).map((item, idx) => {
           const col = progressColor(item.progress);
           const labels = ['Em andamento', 'Quase concluído', 'Iniciada'];
           return (
-            <div key={item.id}
-              className="bg-[#1C1F26] border border-white/5 rounded-xl p-4 flex flex-col gap-1"
+            <div key={item.id} className="bg-[#1C1F26] border border-white/5 rounded-xl p-4 flex flex-col gap-1"
               style={{ borderTopColor: col, borderTopWidth: 2 }}>
               <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest truncate">{item.name}</p>
               <p className="text-2xl font-black" style={{ color: col }}>{item.progress}%</p>
@@ -184,38 +180,37 @@ export function CronogramaPage() {
         </div>
         <div className="bg-[#1C1F26] border border-white/5 rounded-xl p-4 flex flex-col gap-1">
           <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Docs Pendentes</p>
-          <p className="text-2xl font-black text-white">{pendingDocs}</p>
-          <p className="text-[10px] text-zinc-500">{pendingDocs === 0 ? 'Em dia' : 'Aguardando'}</p>
+          <p className="text-2xl font-black text-white">{pending}</p>
+          <p className="text-[10px] text-zinc-500">{pending === 0 ? 'Em dia' : 'Aguardando'}</p>
         </div>
       </div>
 
+      {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-white/5">
         {([
           { key: 'progress',  label: 'Progresso físico' },
           { key: 'docs',      label: 'Documentação' },
           { key: 'contracts', label: 'Contratos' },
-        ] as const).map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+        ] as const).map(t => (
+          <button key={t.key} onClick={() => setTab(t.key)}
             className={`px-4 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all -mb-px ${
-              activeTab === tab.key
+              tab === t.key
                 ? 'border-emerald-400 text-white bg-emerald-500/5'
                 : 'border-transparent text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            {tab.label}
+            }`}>
+            {t.label}
           </button>
         ))}
       </div>
 
-      {activeTab === 'progress' && (
+      {/* Aba: Progresso */}
+      {tab === 'progress' && (
         <div className="space-y-2">
           <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">
             Avanço Físico — {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
           </p>
           {items.length === 0
-            ? <EmptyState message="Nenhuma etapa cadastrada no cronograma." />
+            ? <Empty message="Nenhuma etapa cadastrada no cronograma." />
             : items.map(item => {
                 const pct = item.progress ?? 0;
                 const color = progressColor(pct);
@@ -229,11 +224,9 @@ export function CronogramaPage() {
                     </div>
                     <div className="flex items-center gap-2 w-20 justify-end">
                       <span className="text-xs font-bold" style={{ color: pct > 0 ? color : '#52525b' }}>{pct}%</span>
-                      <input
-                        type="range" min={0} max={100} step={5} value={pct}
+                      <input type="range" min={0} max={100} step={5} value={pct}
                         onChange={e => updateProgress(item.id, Number(e.target.value))}
-                        className="w-16 opacity-0 group-hover:opacity-100 transition-opacity accent-blue-500 cursor-pointer"
-                      />
+                        className="w-16 opacity-0 group-hover:opacity-100 transition-opacity accent-blue-500 cursor-pointer" />
                     </div>
                   </div>
                 );
@@ -241,30 +234,28 @@ export function CronogramaPage() {
           {items.length > 0 && (
             <div className="mt-4 flex items-center justify-between px-4 py-3 bg-[#1C1F26] border border-white/5 rounded-xl">
               <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Progresso Médio Geral</span>
-              <span className="text-xl font-black" style={{ color: progressColor(avgProgress) }}>{avgProgress}%</span>
+              <span className="text-xl font-black" style={{ color: progressColor(avg) }}>{avg}%</span>
             </div>
           )}
         </div>
       )}
 
-      {activeTab === 'docs' && (
+      {/* Aba: Documentação */}
+      {tab === 'docs' && (
         <div className="space-y-6">
           <div>
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">Projetos Técnicos</p>
             {techDocs.length === 0
-              ? <EmptyState message="Nenhum projeto técnico cadastrado." />
+              ? <Empty message="Nenhum projeto técnico cadastrado." />
               : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                   {techDocs.map(doc => (
-                    <div key={doc.id}
-                      className="bg-[#181B22] border border-white/5 hover:border-white/10 rounded-xl p-4 flex flex-col gap-2 transition-colors">
+                    <div key={doc.id} className="bg-[#181B22] border border-white/5 hover:border-white/10 rounded-xl p-4 flex flex-col gap-2 transition-colors">
                       <p className="text-sm font-bold text-white leading-snug">{doc.name}</p>
                       <p className="text-[11px] text-zinc-500 leading-snug">
-                        {doc.responsible}
-                        {doc.version && ` · ${doc.version}`}
-                        {doc.date && ` · ${fmtDate(doc.date)}`}
+                        {doc.responsible}{doc.version && ` · ${doc.version}`}{doc.date && ` · ${fmtDate(doc.date)}`}
                       </p>
-                      <div className="mt-auto pt-1"><StatusBadge status={doc.status ?? 'Pendente'} /></div>
+                      <div className="mt-auto pt-1"><Badge status={doc.status ?? 'Pendente'} /></div>
                     </div>
                   ))}
                 </div>
@@ -273,18 +264,16 @@ export function CronogramaPage() {
           <div>
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">Licenças e Aprovações Legais</p>
             {legalDocs.length === 0
-              ? <EmptyState message="Nenhum documento legal cadastrado." />
+              ? <Empty message="Nenhum documento legal cadastrado." />
               : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                   {legalDocs.map(doc => (
-                    <div key={doc.id}
-                      className="bg-[#181B22] border border-white/5 hover:border-white/10 rounded-xl p-4 flex flex-col gap-2 transition-colors">
+                    <div key={doc.id} className="bg-[#181B22] border border-white/5 hover:border-white/10 rounded-xl p-4 flex flex-col gap-2 transition-colors">
                       <p className="text-sm font-bold text-white leading-snug">{doc.document}</p>
                       <p className="text-[11px] text-zinc-500 leading-snug">
-                        {doc.organization}
-                        {doc.sent_date && ` · enviado ${fmtDate(doc.sent_date)}`}
+                        {doc.organization}{doc.sent_date && ` · enviado ${fmtDate(doc.sent_date)}`}
                       </p>
-                      <div className="mt-auto pt-1"><StatusBadge status={doc.status ?? 'Pendente'} /></div>
+                      <div className="mt-auto pt-1"><Badge status={doc.status ?? 'Pendente'} /></div>
                     </div>
                   ))}
                 </div>
@@ -293,21 +282,19 @@ export function CronogramaPage() {
         </div>
       )}
 
-      {activeTab === 'contracts' && (
+      {/* Aba: Contratos */}
+      {tab === 'contracts' && (
         <div>
           <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">Prestadores e Contratos</p>
           {contracts.length === 0
-            ? <EmptyState message="Nenhum contrato cadastrado." />
+            ? <Empty message="Nenhum contrato cadastrado." />
             : (
               <div className="rounded-xl overflow-hidden border border-white/5">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-white/5 bg-[#181B22]">
                       {['Empresa', 'Escopo', 'Contrato', 'Valor', 'Pagamento', 'Prazo'].map(h => (
-                        <th key={h}
-                          className="px-4 py-3 text-left text-[10px] font-bold text-zinc-500 uppercase tracking-widest whitespace-nowrap">
-                          {h}
-                        </th>
+                        <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-zinc-500 uppercase tracking-widest whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -317,37 +304,24 @@ export function CronogramaPage() {
                       const signed = raw === true || raw === 'true' || raw === 'sim' ? true
                         : raw === false || raw === 'false' || raw === 'nao' || raw === 'não' ? false : null;
                       const hasVal = c.value && parseFloat(c.value) > 0;
-                      const prazo  = (c as any).duration_days
-                        ? `${(c as any).duration_days} dias`
+                      const prazo  = (c as any).duration_days ? `${(c as any).duration_days} dias`
                         : c.deadline ? fmtDate(c.deadline) : null;
-                      const pgto   = (c as any).installments
-                        ? `${(c as any).installments} parcelas`
+                      const pgto   = (c as any).installments ? `${(c as any).installments} parcelas`
                         : (c as any).payment_terms ?? null;
                       return (
-                        <tr key={c.id}
-                          className={`border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors ${
-                            i % 2 === 0 ? 'bg-[#16191F]' : 'bg-[#181B22]'
-                          }`}>
+                        <tr key={c.id} className={`border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors ${i % 2 === 0 ? 'bg-[#16191F]' : 'bg-[#181B22]'}`}>
                           <td className="px-4 py-3.5 font-bold text-white whitespace-nowrap">{c.company}</td>
                           <td className="px-4 py-3.5 text-zinc-400 max-w-xs">{c.scope || '—'}</td>
                           <td className="px-4 py-3.5">
-                            {signed === true
-                              ? <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">SIM</span>
-                              : signed === false
-                              ? <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">NÃO</span>
+                            {signed === true ? <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">SIM</span>
+                              : signed === false ? <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">NÃO</span>
                               : <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-zinc-800 text-zinc-500 text-xs">–</span>}
                           </td>
                           <td className="px-4 py-3.5 font-bold whitespace-nowrap">
-                            {hasVal
-                              ? <span className="text-emerald-400">{fmtBudget(c.value)}</span>
-                              : <span className="text-zinc-600">—</span>}
+                            {hasVal ? <span className="text-emerald-400">{fmtBudget(c.value)}</span> : <span className="text-zinc-600">—</span>}
                           </td>
-                          <td className="px-4 py-3.5 text-zinc-400 whitespace-nowrap">
-                            {pgto ?? <span className="text-zinc-600">—</span>}
-                          </td>
-                          <td className="px-4 py-3.5 text-zinc-400 whitespace-nowrap">
-                            {prazo ?? <span className="text-zinc-600">—</span>}
-                          </td>
+                          <td className="px-4 py-3.5 text-zinc-400 whitespace-nowrap">{pgto ?? <span className="text-zinc-600">—</span>}</td>
+                          <td className="px-4 py-3.5 text-zinc-400 whitespace-nowrap">{prazo ?? <span className="text-zinc-600">—</span>}</td>
                         </tr>
                       );
                     })}
