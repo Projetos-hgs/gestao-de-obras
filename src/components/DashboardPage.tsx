@@ -355,33 +355,47 @@ export function DashboardPage() {
       </div>
 
       {/* ── Alertas e Pendências ── */}
-      {alerts.length > 0 && (
-        <div className="bg-[#1C1F26] border border-white/5 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-white">Alertas e Pendências</h3>
-            <span className="text-[10px] font-bold text-zinc-600 bg-white/5 px-2 py-1 rounded-md">
+      <div className="bg-[#1C1F26] border border-white/5 rounded-xl p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <AlertTriangle size={15} className="text-amber-400" />
+          <h3 className="text-sm font-bold text-white">Alertas e Pendências</h3>
+          {alerts.length > 0 && (
+            <span className="ml-auto text-[10px] font-bold text-zinc-600 bg-white/5 px-2 py-1 rounded-md">
               {alerts.length} ativo{alerts.length !== 1 ? 's' : ''}
             </span>
+          )}
+        </div>
+
+        {alerts.length === 0 ? (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-500/5 border border-emerald-500/15 text-xs text-emerald-400">
+            <CheckCircle2 size={13} className="flex-shrink-0" />
+            Nenhum alerta ativo no momento.
           </div>
+        ) : (
           <div className="space-y-2">
             {alerts.map(alert => (
               <div
                 key={alert.id}
-                className={`flex items-start gap-3 px-4 py-3 rounded-lg border text-xs ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 text-xs ${
                   alert.type === 'error'
-                    ? 'bg-red-500/5 border-red-500/20 text-red-400'
+                    ? 'bg-[#201A1A] border-red-500 text-red-300'
                     : alert.type === 'warning'
-                    ? 'bg-amber-500/5 border-amber-500/20 text-amber-400'
-                    : 'bg-blue-500/5 border-blue-500/20 text-blue-400'
+                    ? 'bg-[#1E1B14] border-amber-500 text-amber-300'
+                    : 'bg-[#141A20] border-blue-500 text-blue-300'
                 }`}
               >
-                <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" />
+                <AlertTriangle
+                  size={13}
+                  className={`flex-shrink-0 ${
+                    alert.type === 'error' ? 'text-red-500' : alert.type === 'warning' ? 'text-amber-500' : 'text-blue-500'
+                  }`}
+                />
                 <span className="leading-relaxed">{alert.text}</span>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* ── Evolução de Marcos ── */}
       <div className="bg-[#1C1F26] border border-white/5 rounded-xl p-6">
