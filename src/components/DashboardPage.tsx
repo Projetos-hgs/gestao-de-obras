@@ -279,32 +279,6 @@ export function DashboardPage() {
   /* spinner apenas na carga inicial de projetos */
   if (loadingProjects) return <LoadingSpinner />;
 
-  /* sem projetos: mostrar header vazio + botão de novo TAP */
-  if (projects.length === 0) return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Dashboard</h1>
-        <button
-          onClick={() => setShowNewTAP(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-xs font-bold text-white transition-all shadow-lg shadow-blue-500/20"
-        >
-          <Plus size={14} /> Novo TAP
-        </button>
-      </div>
-      <p className="text-sm text-zinc-500">Nenhum projeto cadastrado. Crie o primeiro TAP para começar.</p>
-      {showNewTAP && (
-        <NewTAPModal
-          onClose={() => setShowNewTAP(false)}
-          onSaved={async () => {
-            const projs = await api.projects.list();
-            setProjects(projs);
-            if (projs.length > 0) setSelectedProjectId(projs[projs.length - 1].id);
-          }}
-        />
-      )}
-    </div>
-  );
-
   /* ── Cálculos ── */
   const pendingDocs = [...legalDocs, ...techProjects].filter(
     d => d.status === 'Pendente' || d.status === 'Em análise' || !d.status,
@@ -338,7 +312,8 @@ export function DashboardPage() {
             </p>
           </div>
 
-          {/* botão dropdown de troca de projeto */}
+          {/* botão dropdown de troca de projeto — só aparece se há projetos */}
+          {projects.length > 0 && (
           <div className="relative mt-0.5">
             <button
               onClick={() => setShowProjectDropdown(v => !v)}
@@ -378,6 +353,7 @@ export function DashboardPage() {
               </>
             )}
           </div>
+          )}
 
           {loadingData && (
             <span className="text-[10px] text-zinc-500 animate-pulse mt-2">carregando...</span>
