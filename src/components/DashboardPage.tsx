@@ -59,6 +59,7 @@ function NewTAPModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
     setSaving(true);
     setError('');
     try {
+      console.log('[v0] Criando projeto:', form.name);
       const created = await api.projects.create({
         name: form.name.trim(),
         start_date: form.start_date || null,
@@ -70,15 +71,14 @@ function NewTAPModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
         budget: form.budget || null,
         status: 'Em andamento',
       });
+      console.log('[v0] Projeto criado:', created);
 
-      const objectives = form.objectives.split('\n').map(s => s.trim()).filter(Boolean);
+      const objectives   = form.objectives.split('\n').map(s => s.trim()).filter(Boolean);
       const requirements = form.requirements.split('\n').map(s => s.trim()).filter(Boolean);
-      const tapRisks = form.tap_risks.split('\n').map(s => s.trim()).filter(Boolean);
+      const tapRisks     = form.tap_risks.split('\n').map(s => s.trim()).filter(Boolean);
       const stakeholders = form.stakeholders.split('\n').map(s => s.trim()).filter(Boolean);
-      const milestones = form.milestones
-        .split('\n')
-        .map(s => s.trim())
-        .filter(Boolean)
+      const milestones   = form.milestones
+        .split('\n').map(s => s.trim()).filter(Boolean)
         .map(line => {
           const idx = line.indexOf(' - ');
           return idx !== -1
@@ -86,13 +86,16 @@ function NewTAPModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
             : { date: '', description: line };
         });
 
-      await api.projects.updateTap(created.id, {
+      console.log('[v0] Salvando TAP para id:', created.id);
+      await api.projects.updateTap(String(created.id), {
         objectives, requirements, tapRisks, stakeholders, milestones,
       });
+      console.log('[v0] TAP salvo com sucesso');
 
       onSaved();
       onClose();
     } catch (e: any) {
+      console.error('[v0] Erro ao salvar TAP:', e);
       setError(e.message || 'Erro ao salvar.');
     } finally {
       setSaving(false);
@@ -257,10 +260,10 @@ export function DashboardPage() {
         const [alts, comps, full, sched, legal, tech] = await Promise.all([
           api.alerts.list(),
           api.companies.list(),
-          api.projects.get(selectedProjectId),
-          api.schedule.list(selectedProjectId),
-          api.legalDocs.list(selectedProjectId),
-          api.technicalProjects.list(selectedProjectId),
+          api.projects.get(String(selectedProjectId)),
+          api.schedule.list(String(selectedProjectId)),
+          api.legalDocs.list(String(selectedProjectId)),
+          api.technicalProjects.list(String(selectedProjectId)),
         ]);
         setAlerts(alts.filter((a: Alert) => !a.resolved));
         setCompanies(comps);

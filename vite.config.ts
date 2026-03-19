@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import type { Plugin } from 'vite';
+// cache bust: 1
 
 /**
  * Plugin de API inline — sem servidor separado, sem proxy para porta 3001.

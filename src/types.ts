@@ -105,6 +105,10 @@ export interface Contract {
   deadline: string;
   warranty: string;
   status: string;
+  signed?: boolean | string | null;
+  installments?: number | null;
+  payment_terms?: string | null;
+  duration_days?: number | null;
 }
 
 export interface Company {

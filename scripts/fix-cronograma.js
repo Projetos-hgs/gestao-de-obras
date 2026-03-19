@@ -1,4 +1,24 @@
-import React, { useState, useEffect } from 'react';
+const { readdirSync, existsSync } = require('fs');
+const path = require('path');
+
+// Discover where the project actually lives
+const candidates = [
+  '/vercel/share/v0-next-shadcn',
+  '/vercel/share/v0-project',
+  '/home/user/project',
+  process.cwd(),
+];
+
+for (const base of candidates) {
+  const f = path.join(base, 'src/components/CronogramaPage.tsx');
+  console.log('[v0] Checking:', f, '→ exists:', existsSync(f));
+}
+
+try { console.log('[v0] CWD files:', readdirSync(process.cwd())); } catch(e) {}
+try { console.log('[v0] CWD/src:', readdirSync(path.join(process.cwd(), 'src'))); } catch(e) {}
+try { console.log('[v0] CWD/src/components:', readdirSync(path.join(process.cwd(), 'src/components'))); } catch(e) {}
+
+const content = `import React, { useState, useEffect } from 'react';
 import { FileText } from 'lucide-react';
 import { api } from '../lib/api';
 import type { Project, ScheduleItem, Contract, LegalDocument } from '../types';
@@ -11,9 +31,9 @@ function fmtBudget(v?: string | null) {
   if (!v || v === '0') return '—';
   const n = parseFloat(v);
   if (isNaN(n)) return v;
-  if (n >= 1_000_000) return `R$ ${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `R$ ${(n / 1_000).toFixed(0)}K`;
-  return `R$ ${n.toLocaleString('pt-BR')}`;
+  if (n >= 1_000_000) return \`R\$ \${(n / 1_000_000).toFixed(1)}M\`;
+  if (n >= 1_000) return \`R\$ \${(n / 1_000).toFixed(0)}K\`;
+  return \`R\$ \${n.toLocaleString('pt-BR')}\`;
 }
 function progressColor(p: number) {
   if (p >= 70) return '#22c55e';
@@ -48,7 +68,7 @@ function StatusBadge({ status }: { status: string }) {
   else if (s.includes('aguardando'))                    { cls = 'bg-blue-500/15 text-blue-400 border-blue-500/30'; label = 'AGUARDANDO ÓRGÃO'; }
   else if (s === 'pendente')                            { cls = 'bg-amber-500/15 text-amber-400 border-amber-500/30'; label = 'PENDENTE'; }
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${cls}`}>
+    <span className={\`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border \${cls}\`}>
       {label}
     </span>
   );
@@ -123,11 +143,11 @@ export function CronogramaPage() {
             <span className="text-white">{nameFirst} </span>
             <span className="text-emerald-400">{nameRest}</span>
           </h1>
-          <span className={`flex-shrink-0 mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border ${
+          <span className={\`flex-shrink-0 mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border \${
             (project?.status ?? '').toLowerCase().includes('anda')
               ? 'bg-amber-500/10 text-amber-400 border-amber-500/25'
               : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/25'
-          }`}>
+          }\`}>
             <span className="w-1.5 h-1.5 rounded-full bg-current" />
             {project?.status ?? 'EM ANDAMENTO'}
           </span>
@@ -155,7 +175,7 @@ export function CronogramaPage() {
         <div className="bg-[#1C1F26] border border-emerald-500/20 rounded-xl p-4 flex flex-col gap-1">
           <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Etapa Atual</p>
           <p className="text-lg font-black text-white leading-tight">{topItems[0]?.name ?? '—'}</p>
-          <p className="text-[10px] text-zinc-500">{topItems[0] ? `${topItems[0].progress}% concluído` : 'Sem etapas'}</p>
+          <p className="text-[10px] text-zinc-500">{topItems[0] ? \`\${topItems[0].progress}% concluído\` : 'Sem etapas'}</p>
         </div>
         {topItems.slice(0, 3).map((item, idx) => {
           const col = progressColor(item.progress);
@@ -189,11 +209,11 @@ export function CronogramaPage() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all -mb-px ${
+            className={\`px-4 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-all -mb-px \${
               activeTab === tab.key
                 ? 'border-emerald-400 text-white bg-emerald-500/5'
                 : 'border-transparent text-zinc-500 hover:text-zinc-300'
-            }`}
+            }\`}
           >
             {tab.label}
           </button>
@@ -214,7 +234,7 @@ export function CronogramaPage() {
                   <div key={item.id} className="group flex items-center gap-4 px-4 py-3 bg-[#181B22] border border-white/5 rounded-lg hover:border-white/10 transition-colors">
                     <span className="w-52 flex-shrink-0 text-sm font-semibold text-zinc-200 truncate">{item.name}</span>
                     <div className="flex-1 relative h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                      <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-300" style={{ width: `${pct}%`, backgroundColor: color }} />
+                      <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-300" style={{ width: \`\${pct}%\`, backgroundColor: color }} />
                     </div>
                     <div className="flex items-center gap-2 w-20 justify-end">
                       <span className="text-xs font-bold" style={{ color: pct > 0 ? color : '#52525b' }}>{pct}%</span>
@@ -249,7 +269,7 @@ export function CronogramaPage() {
                     <div key={doc.id} className="bg-[#181B22] border border-white/5 hover:border-white/10 rounded-xl p-4 flex flex-col gap-2 transition-colors">
                       <p className="text-sm font-bold text-white leading-snug">{doc.name}</p>
                       <p className="text-[11px] text-zinc-500 leading-snug">
-                        {doc.responsible}{doc.version && ` · ${doc.version}`}{doc.date && ` · ${fmtDate(doc.date)}`}
+                        {doc.responsible}{doc.version && \` · \${doc.version}\`}{doc.date && \` · \${fmtDate(doc.date)}\`}
                       </p>
                       <div className="mt-auto pt-1"><StatusBadge status={doc.status} /></div>
                     </div>
@@ -268,7 +288,7 @@ export function CronogramaPage() {
                     <div key={doc.id} className="bg-[#181B22] border border-white/5 hover:border-white/10 rounded-xl p-4 flex flex-col gap-2 transition-colors">
                       <p className="text-sm font-bold text-white leading-snug">{doc.document}</p>
                       <p className="text-[11px] text-zinc-500 leading-snug">
-                        {doc.organization}{doc.sent_date && ` · enviado ${fmtDate(doc.sent_date)}`}
+                        {doc.organization}{doc.sent_date && \` · enviado \${fmtDate(doc.sent_date)}\`}
                       </p>
                       <div className="mt-auto pt-1"><StatusBadge status={doc.status} /></div>
                     </div>
@@ -303,13 +323,13 @@ export function CronogramaPage() {
                         : null;
                       const hasValue = c.value && parseFloat(c.value) > 0;
                       const prazo = (c as any).duration_days
-                        ? `${(c as any).duration_days} dias`
+                        ? \`\${(c as any).duration_days} dias\`
                         : c.deadline ? fmtDate(c.deadline) : null;
                       const pagamento = (c as any).installments
-                        ? `${(c as any).installments} parcelas`
+                        ? \`\${(c as any).installments} parcelas\`
                         : (c as any).payment_terms ?? null;
                       return (
-                        <tr key={c.id} className={`border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors ${i % 2 === 0 ? 'bg-[#16191F]' : 'bg-[#181B22]'}`}>
+                        <tr key={c.id} className={\`border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors \${i % 2 === 0 ? 'bg-[#16191F]' : 'bg-[#181B22]'}\`}>
                           <td className="px-4 py-3.5 font-bold text-white whitespace-nowrap">{c.company}</td>
                           <td className="px-4 py-3.5 text-zinc-400 max-w-xs">{c.scope || '—'}</td>
                           <td className="px-4 py-3.5">
@@ -347,3 +367,8 @@ export function CronogramaPage() {
     </div>
   );
 }
+`;
+
+// Write to destination only
+writeFileSync(dst, content, 'utf8');
+console.log('[v0] Written. Lines:', content.split('\n').length);
