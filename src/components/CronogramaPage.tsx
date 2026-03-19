@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Plus, Trash2, Calendar, FileText, Briefcase,
-  ChevronDown, TrendingUp, AlertTriangle, CheckCircle2,
-} from 'lucide-react';
+import { Plus, Trash2, FileText, Briefcase, TrendingUp } from 'lucide-react';
 import { api } from '../lib/api';
 import { LoadingSpinner, EmptyState } from './Layout';
 import type { ScheduleItem, Project, Contract, LegalDocument } from '../types';
 
 /* ── helpers ── */
 function progressColor(p: number): string {
-  if (p >= 70) return '#22d3a0';   // verde
-  if (p >= 30) return '#f59e0b';   // laranja
-  return '#6366f1';                // azul/roxo
+  if (p >= 70) return '#22d3a0';
+  if (p >= 30) return '#f59e0b';
+  return '#6366f1';
 }
 
 function progressTextColor(p: number): string {
@@ -38,14 +35,11 @@ const inputCls =
   'bg-[#121418] border border-white/10 rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-blue-500/50 transition-colors w-full';
 
 /* ── KPI card ── */
-function KpiCard({
-  label, value, sub, accent,
-}: { label: string; value: string; sub?: string; accent?: string }) {
+function KpiCard({ label, value, sub, accent }: {
+  label: string; value: string; sub?: string; accent?: string;
+}) {
   return (
-    <div
-      className="rounded-xl p-4 flex flex-col gap-1 border border-white/5"
-      style={{ background: '#181B22' }}
-    >
+    <div className="rounded-xl p-4 flex flex-col gap-1 border border-white/5" style={{ background: '#181B22' }}>
       <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">{label}</p>
       <p className={`text-2xl font-black leading-none ${accent ?? 'text-white'}`}>{value}</p>
       {sub && <p className="text-[10px] text-zinc-600 mt-0.5">{sub}</p>}
@@ -54,9 +48,7 @@ function KpiCard({
 }
 
 /* ── Progress row ── */
-function ProgressRow({
-  item, onUpdate, onDelete,
-}: {
+function ProgressRow({ item, onUpdate, onDelete }: {
   item: ScheduleItem;
   onUpdate: (id: string, progress: number) => void;
   onDelete: (id: string) => void;
@@ -76,12 +68,11 @@ function ProgressRow({
       <span className={`text-xs font-bold w-10 text-right flex-shrink-0 ${textCls}`}>
         {item.progress}%
       </span>
-      {/* slider inline para ajustar */}
       <input
         type="range" min={0} max={100}
         value={item.progress}
         onChange={e => onUpdate(item.id, Number(e.target.value))}
-        className="w-20 accent-blue-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+        className="w-20 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
         style={{ accentColor: color }}
       />
       <button
@@ -94,21 +85,29 @@ function ProgressRow({
   );
 }
 
-/* ── Badge de status colorido ── */
+/* ── Status badge ── */
 function StatusBadge({ status }: { status: string }) {
-  const s = status?.toLowerCase() ?? '';
-  let cls = '';
+  const s = (status ?? '').toLowerCase();
+  let cls = 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30';
   let label = status;
 
-  if (s === 'emitido')                                  { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; }
-  else if (s.includes('rrt') || s.includes('art'))     { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; label = s.includes('rrt') ? 'COM RRT' : 'COM ART'; }
-  else if (s === 'aprovado')                            { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; }
-  else if (s === 'em elaboração' || s === 'elaboracao') { cls = 'bg-amber-500/15 text-amber-400 border-amber-500/30'; label = 'EM ELABORAÇÃO'; }
-  else if (s.includes('boleto'))                        { cls = 'bg-red-500/15 text-red-400 border-red-500/30'; label = 'AG. BOLETO PAGAMENTO'; }
-  else if (s.includes('envio'))                         { cls = 'bg-red-500/15 text-red-400 border-red-500/30'; label = 'AG. ENVIO DO PROJETO'; }
-  else if (s.includes('aguardando'))                    { cls = 'bg-blue-500/15 text-blue-400 border-blue-500/30'; label = 'AGUARDANDO ÓRGÃO'; }
-  else if (s === 'pendente')                            { cls = 'bg-amber-500/15 text-amber-400 border-amber-500/30'; label = 'PENDENTE'; }
-  else                                                  { cls = 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30'; }
+  if (s === 'emitido' || s === 'aprovado') {
+    cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
+  } else if (s.includes('rrt')) {
+    cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; label = 'COM RRT';
+  } else if (s.includes('art')) {
+    cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; label = 'COM ART';
+  } else if (s === 'em elaboração' || s === 'elaboracao' || s === 'em elaboracao') {
+    cls = 'bg-amber-500/15 text-amber-400 border-amber-500/30'; label = 'EM ELABORAÇÃO';
+  } else if (s.includes('boleto')) {
+    cls = 'bg-red-500/15 text-red-400 border-red-500/30'; label = 'AG. BOLETO PAGAMENTO';
+  } else if (s.includes('envio')) {
+    cls = 'bg-red-500/15 text-red-400 border-red-500/30'; label = 'AG. ENVIO DO PROJETO';
+  } else if (s.includes('aguardando')) {
+    cls = 'bg-blue-500/15 text-blue-400 border-blue-500/30'; label = 'AGUARDANDO ÓRGÃO';
+  } else if (s === 'pendente') {
+    cls = 'bg-amber-500/15 text-amber-400 border-amber-500/30'; label = 'PENDENTE';
+  }
 
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${cls}`}>
@@ -117,26 +116,29 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-
-  const [projects, setProjects] = useState<Project[]>([]);
+/* ══════════════════════════════════════════════════════════════ */
+export function CronogramaPage() {
+  const [projects, setProjects]   = useState<Project[]>([]);
   const [projectId, setProjectId] = useState<string | null>(null);
-  const [project, setProject] = useState<Project | null>(null);
-  const [items, setItems] = useState<ScheduleItem[]>([]);
+  const [project, setProject]     = useState<Project | null>(null);
+  const [items, setItems]         = useState<ScheduleItem[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [legalDocs, setLegalDocs] = useState<LegalDocument[]>([]);
-  const [techDocs, setTechDocs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [techDocs, setTechDocs]   = useState<any[]>([]);
+  const [loading, setLoading]     = useState(true);
   const [activeTab, setActiveTab] = useState<'progress' | 'docs' | 'contracts'>('progress');
-  const [adding, setAdding] = useState(false);
-  const [newItem, setNewItem] = useState({ name: '', progress: 0 });
+  const [adding, setAdding]       = useState(false);
+  const [newItem, setNewItem]     = useState({ name: '', progress: 0 });
 
   /* carrega lista de projetos */
   useEffect(() => {
-    api.projects.list().then(projs => {
-      setProjects(projs);
-      if (projs.length > 0) setProjectId(String(projs[0].id));
-      else setLoading(false);
-    }).catch(() => setLoading(false));
+    api.projects.list()
+      .then(projs => {
+        setProjects(projs);
+        if (projs.length > 0) setProjectId(String(projs[0].id));
+        else setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   /* carrega dados do projeto selecionado */
@@ -149,13 +151,15 @@ function StatusBadge({ status }: { status: string }) {
       api.contracts.list(projectId),
       api.legalDocs.list(projectId),
       api.technicalProjects.list(projectId),
-    ]).then(([proj, sched, contr, legal, tech]) => {
-      setProject(proj);
-      setItems(sched);
-      setContracts(contr);
-      setLegalDocs(legal);
-      setTechDocs(tech);
-    }).catch(err => console.error('[v0]', err))
+    ])
+      .then(([proj, sched, contr, legal, tech]) => {
+        setProject(proj);
+        setItems(sched);
+        setContracts(contr);
+        setLegalDocs(legal);
+        setTechDocs(tech);
+      })
+      .catch(err => console.error('[v0]', err))
       .finally(() => setLoading(false));
   }, [projectId]);
 
@@ -187,14 +191,14 @@ function StatusBadge({ status }: { status: string }) {
   }
 
   /* ── KPI derivados ── */
-  const avgProgress = items.length
-    ? Math.round(items.reduce((a, i) => a + (i.progress ?? 0), 0) / items.length)
-    : 0;
+  const pendingDocs = legalDocs.filter(d => {
+    const s = (d.status ?? '').toLowerCase();
+    return s !== 'aprovado' && s !== 'emitido';
+  }).length;
 
-  const pendingDocs = legalDocs.filter(d => d.status !== 'aprovado' && d.status !== 'Aprovado').length;
   const biggestContract = contracts.reduce((max, c) => {
     const v = parseFloat(String(c.value).replace(/[^\d.]/g, '')) || 0;
-    const m = parseFloat(String(max.value ?? '0').replace(/[^\d.]/g, '')) || 0;
+    const m = parseFloat(String((max as any).value ?? '0').replace(/[^\d.]/g, '')) || 0;
     return v > m ? c : max;
   }, {} as any);
 
@@ -202,21 +206,20 @@ function StatusBadge({ status }: { status: string }) {
     ?? items.find(i => i.progress === 0)
     ?? null;
 
-  /* fases chave para os KPI cards (pega 3 primeiras com progresso) */
   const phases = items.slice(0, 3);
 
-  if (loading) return <LoadingSpinner />;
-
   const tabs = [
-    { id: 'progress' as const,   label: 'Progresso físico', icon: TrendingUp },
-    { id: 'docs' as const,       label: 'Documentação',     icon: FileText },
-    { id: 'contracts' as const,  label: 'Contratos',        icon: Briefcase },
+    { id: 'progress' as const,  label: 'Progresso físico', icon: TrendingUp },
+    { id: 'docs' as const,      label: 'Documentação',     icon: FileText },
+    { id: 'contracts' as const, label: 'Contratos',        icon: Briefcase },
   ];
+
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
 
-      {/* ── Seletor de projeto (se houver mais de 1) ── */}
+      {/* ── Seletor de projeto ── */}
       {projects.length > 1 && (
         <div className="flex items-center gap-3">
           <label className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Projeto</label>
@@ -236,9 +239,7 @@ function StatusBadge({ status }: { status: string }) {
       <div className="bg-[#181B22] border border-white/5 rounded-xl p-6">
         <div className="flex items-start justify-between gap-4 mb-1">
           <div>
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
-              VP Construtora
-            </p>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">VP Construtora</p>
             <h1 className="text-3xl font-black text-white leading-tight">
               {project?.name
                 ? project.name.split(' ').map((word, i) =>
@@ -250,10 +251,10 @@ function StatusBadge({ status }: { status: string }) {
               }
             </h1>
             <p className="text-xs text-zinc-500 mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
-              {project?.cno && <span>CNO {project.cno}</span>}
+              {project?.cno        && <span>CNO {project.cno}</span>}
               {project?.start_date && <span>Início: {fmtDate(project.start_date)}</span>}
-              {project?.area && <span>Área: {project.area}</span>}
-              {project?.manager && <span>Resp: {project.manager}</span>}
+              {project?.area       && <span>Área: {project.area}</span>}
+              {project?.manager    && <span>Resp: {project.manager}</span>}
             </p>
           </div>
           <span className="px-3 py-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 flex-shrink-0">
@@ -269,7 +270,7 @@ function StatusBadge({ status }: { status: string }) {
             value={currentPhase?.name ?? '—'}
             sub={currentPhase ? `${currentPhase.progress}% concluído` : 'Nenhuma etapa'}
           />
-          {phases.map((ph, i) => (
+          {phases.map(ph => (
             <KpiCard
               key={ph.id}
               label={ph.name}
@@ -278,7 +279,6 @@ function StatusBadge({ status }: { status: string }) {
               accent={progressTextColor(ph.progress)}
             />
           ))}
-          {/* preenche KPIs restantes */}
           {phases.length < 3 && Array.from({ length: 3 - phases.length }).map((_, i) => (
             <KpiCard key={`empty-${i}`} label="—" value="—" />
           ))}
@@ -290,7 +290,7 @@ function StatusBadge({ status }: { status: string }) {
           <KpiCard
             label="Docs Pendentes"
             value={String(pendingDocs)}
-            sub={pendingDocs > 0 ? 'Aguardando aprovação' : 'Documentação em dia'}
+            sub={pendingDocs > 0 ? 'Aguardando aprovação' : 'Em dia'}
             accent={pendingDocs > 0 ? 'text-amber-400' : 'text-emerald-400'}
           />
         </div>
@@ -303,9 +303,7 @@ function StatusBadge({ status }: { status: string }) {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === tab.id
-                ? 'bg-white/10 text-white'
-                : 'text-zinc-500 hover:text-zinc-300'
+              activeTab === tab.id ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             <tab.icon size={13} />
@@ -314,74 +312,61 @@ function StatusBadge({ status }: { status: string }) {
         ))}
       </div>
 
-      {/* ── ABA: Progresso Físico ── */}
+      {/* ── ABA: Progresso físico ── */}
       {activeTab === 'progress' && (
-        <div className="bg-[#181B22] border border-white/5 rounded-xl overflow-hidden">
-          {/* sub-header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
               Avanço Físico — {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}
             </p>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-zinc-400">
-                Média: <span className="font-bold text-white">{avgProgress}%</span>
-              </span>
-              <button
-                onClick={() => setAdding(v => !v)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 rounded-lg text-xs font-bold text-emerald-400 transition-all"
-              >
-                <Plus size={12} /> Nova Etapa
-              </button>
-            </div>
+            <button
+              onClick={() => setAdding(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-zinc-300 transition-colors"
+            >
+              <Plus size={12} /> Nova etapa
+            </button>
           </div>
 
-          {/* form de adição */}
+          {/* Formulário de nova etapa */}
           {adding && (
-            <div className="px-4 py-4 border-b border-blue-500/20 bg-blue-500/5 flex items-end gap-3 flex-wrap">
-              <div className="flex flex-col gap-1 flex-1 min-w-40">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Nome da etapa</label>
+            <div className="bg-[#181B22] border border-white/10 rounded-xl p-4 flex flex-wrap gap-3 items-end">
+              <div className="flex-1 min-w-48">
+                <label className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block mb-1">Nome da etapa</label>
                 <input
                   className={inputCls}
-                  value={newItem.name}
-                  onChange={e => setNewItem(n => ({ ...n, name: e.target.value }))}
                   placeholder="Ex: Fundação"
+                  value={newItem.name}
+                  onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))}
                   onKeyDown={e => e.key === 'Enter' && addItem()}
+                  autoFocus
                 />
               </div>
-              <div className="flex flex-col gap-1 w-40">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                  Progresso: {newItem.progress}%
-                </label>
+              <div className="w-28">
+                <label className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block mb-1">Progresso %</label>
                 <input
-                  type="range" min={0} max={100}
+                  type="number" min={0} max={100}
+                  className={inputCls}
                   value={newItem.progress}
-                  onChange={e => setNewItem(n => ({ ...n, progress: Number(e.target.value) }))}
-                  className="accent-blue-500"
+                  onChange={e => setNewItem(p => ({ ...p, progress: Number(e.target.value) }))}
                 />
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setAdding(false)} className="px-3 py-2 text-xs text-zinc-500 hover:text-zinc-200 transition-colors">
-                  Cancelar
+                <button onClick={addItem} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-bold text-white transition-colors">
+                  Salvar
                 </button>
-                <button onClick={addItem} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs font-bold text-white transition-all">
-                  Adicionar
+                <button onClick={() => setAdding(false)} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-zinc-400 transition-colors">
+                  Cancelar
                 </button>
               </div>
             </div>
           )}
 
-          {/* lista */}
           {items.length === 0 ? (
-            <EmptyState message="Nenhuma etapa cadastrada. Adicione a primeira etapa." />
+            <EmptyState message="Nenhuma etapa cadastrada. Clique em 'Nova etapa' para começar." />
           ) : (
-            <div>
+            <div className="bg-[#181B22] border border-white/5 rounded-xl overflow-hidden">
               {items.map(item => (
-                <ProgressRow
-                  key={item.id}
-                  item={item}
-                  onUpdate={updateProgress}
-                  onDelete={deleteItem}
-                />
+                <ProgressRow key={item.id} item={item} onUpdate={updateProgress} onDelete={deleteItem} />
               ))}
             </div>
           )}
@@ -392,7 +377,7 @@ function StatusBadge({ status }: { status: string }) {
       {activeTab === 'docs' && (
         <div className="space-y-6">
 
-          {/* ── Projetos Técnicos ── */}
+          {/* Projetos Técnicos */}
           <div>
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
               Projetos Técnicos
@@ -402,10 +387,7 @@ function StatusBadge({ status }: { status: string }) {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 {techDocs.map(doc => (
-                  <div
-                    key={doc.id}
-                    className="bg-[#181B22] border border-white/5 hover:border-white/10 rounded-xl p-4 flex flex-col gap-2 transition-colors"
-                  >
+                  <div key={doc.id} className="bg-[#181B22] border border-white/5 hover:border-white/10 rounded-xl p-4 flex flex-col gap-2 transition-colors">
                     <p className="text-sm font-bold text-white leading-snug">{doc.name}</p>
                     <p className="text-[11px] text-zinc-500 leading-snug">
                       {doc.responsible}
@@ -421,7 +403,7 @@ function StatusBadge({ status }: { status: string }) {
             )}
           </div>
 
-          {/* ── Licenças e Aprovações Legais ── */}
+          {/* Licenças e Aprovações Legais */}
           <div>
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
               Licenças e Aprovações Legais
@@ -431,10 +413,7 @@ function StatusBadge({ status }: { status: string }) {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 {legalDocs.map(doc => (
-                  <div
-                    key={doc.id}
-                    className="bg-[#181B22] border border-white/5 hover:border-white/10 rounded-xl p-4 flex flex-col gap-2 transition-colors"
-                  >
+                  <div key={doc.id} className="bg-[#181B22] border border-white/5 hover:border-white/10 rounded-xl p-4 flex flex-col gap-2 transition-colors">
                     <p className="text-sm font-bold text-white leading-snug">{doc.document}</p>
                     <p className="text-[11px] text-zinc-500 leading-snug">
                       {doc.organization}
@@ -448,7 +427,6 @@ function StatusBadge({ status }: { status: string }) {
               </div>
             )}
           </div>
-
         </div>
       )}
 
@@ -494,6 +472,7 @@ function StatusBadge({ status }: { status: string }) {
           )}
         </div>
       )}
+
     </div>
   );
 }
