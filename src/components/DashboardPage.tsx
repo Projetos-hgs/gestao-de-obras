@@ -220,75 +220,89 @@ function NewTAPModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
 /* ─── Dashboard Page ────────────────────────────────────────── */
 export function DashboardPage() {
   const navigate = useNavigate();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects]               = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
-  const [project, setProject] = useState<Project | null>(null);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
-  const [companies, setCompanies] = useState<any[]>([]);
-  const [legalDocs, setLegalDocs] = useState<any[]>([]);
-  const [techProjects, setTechProjects] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showNewTAP, setShowNewTAP] = useState(false);
+  const [project, setProject]                 = useState<Project | null>(null);
+  const [alerts, setAlerts]                   = useState<Alert[]>([]);
+  const [schedule, setSchedule]               = useState<ScheduleItem[]>([]);
+  const [companies, setCompanies]             = useState<any[]>([]);
+  const [legalDocs, setLegalDocs]             = useState<any[]>([]);
+  const [techProjects, setTechProjects]       = useState<any[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
+  const [loadingData, setLoadingData]         = useState(false);
+  const [showNewTAP, setShowNewTAP]           = useState(false);
 
-  async function loadAll(projectId: number | null) {
-    setLoading(true);
-    try {
-      const [alts, comps] = await Promise.all([
-        api.alerts.list(),
-        api.companies.list(),
-      ]);
-      setAlerts(alts.filter((a: Alert) => !a.resolved));
-      setCompanies(comps);
+  /* carrega lista de projetos uma única vez */
+  useEffect(() => {
+    (async () => {
+      try {
+        const projs: Project[] = await api.projects.list();
+        setProjects(projs);
+        if (projs.length > 0) setSelectedProjectId(projs[0].id);
+      } catch (err) {
+        console.error('[v0] Erro ao carregar projetos:', err);
+      } finally {
+        setLoadingProjects(false);
+      }
+    })();
+  }, []);
 
-      if (projectId) {
-        const [full, sched, legal, tech] = await Promise.all([
-          api.projects.get(projectId),
-          api.schedule.list(projectId),
-          api.legalDocs.list(projectId),
-          api.technicalProjects.list(projectId),
+  /* carrega dados do projeto sempre que o selecionado mudar */
+  useEffect(() => {
+    if (selectedProjectId === null) return;
+    (async () => {
+      setLoadingData(true);
+      try {
+        const [alts, comps, full, sched, legal, tech] = await Promise.all([
+          api.alerts.list(),
+          api.companies.list(),
+          api.projects.get(selectedProjectId),
+          api.schedule.list(selectedProjectId),
+          api.legalDocs.list(selectedProjectId),
+          api.technicalProjects.list(selectedProjectId),
         ]);
+        setAlerts(alts.filter((a: Alert) => !a.resolved));
+        setCompanies(comps);
         setProject(full);
         setSchedule(sched);
         setLegalDocs(legal);
         setTechProjects(tech);
-      } else {
-        setProject(null);
-        setSchedule([]);
-        setLegalDocs([]);
-        setTechProjects([]);
+      } catch (err) {
+        console.error('[v0] Erro ao carregar dados do projeto:', err);
+      } finally {
+        setLoadingData(false);
       }
-    } catch (err) {
-      console.error('[v0] Erro ao carregar dashboard:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadProjects() {
-    const projs = await api.projects.list();
-    setProjects(projs);
-    if (projs.length > 0 && !selectedProjectId) {
-      setSelectedProjectId(projs[0].id);
-      return projs[0].id;
-    }
-    return selectedProjectId;
-  }
-
-  useEffect(() => {
-    (async () => {
-      const id = await loadProjects();
-      await loadAll(id);
     })();
-  }, []);
-
-  useEffect(() => {
-    if (selectedProjectId !== null) {
-      loadAll(selectedProjectId);
-    }
   }, [selectedProjectId]);
 
-  if (loading) return <LoadingSpinner />;
+  /* spinner apenas na carga inicial de projetos */
+  if (loadingProjects) return <LoadingSpinner />;
+
+  /* sem projetos: mostrar header vazio + botão de novo TAP */
+  if (projects.length === 0) return (
+    <div className="space-y-8 animate-in fade-in duration-300">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-white">Dashboard</h1>
+        <button
+          onClick={() => setShowNewTAP(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-xs font-bold text-white transition-all shadow-lg shadow-blue-500/20"
+        >
+          <Plus size={14} /> Novo TAP
+        </button>
+      </div>
+      <p className="text-sm text-zinc-500">Nenhum projeto cadastrado. Crie o primeiro TAP para começar.</p>
+      {showNewTAP && (
+        <NewTAPModal
+          onClose={() => setShowNewTAP(false)}
+          onSaved={async () => {
+            const projs = await api.projects.list();
+            setProjects(projs);
+            if (projs.length > 0) setSelectedProjectId(projs[projs.length - 1].id);
+          }}
+        />
+      )}
+    </div>
+  );
 
   /* ── Cálculos ── */
   const pendingDocs = [...legalDocs, ...techProjects].filter(
@@ -314,26 +328,35 @@ export function DashboardPage() {
     <div className="space-y-8 animate-in fade-in duration-300">
 
       {/* ── Header ── */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3 flex-wrap">
           <h1 className="text-xl font-bold text-white">Dashboard</h1>
-          {projects.length > 0 && (
-            <div className="relative">
-              <select
-                value={selectedProjectId ?? ''}
-                onChange={e => setSelectedProjectId(Number(e.target.value))}
-                className="appearance-none bg-[#1C1F26] border border-white/10 hover:border-white/20 rounded-lg pl-3 pr-8 py-1.5 text-xs font-medium text-zinc-300 focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer"
-              >
-                {projects.map(p => (
-                  <option key={p.id} value={p.id} className="bg-[#1C1F26]">
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronRight size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 rotate-90 pointer-events-none" />
-            </div>
+
+          {/* seletor de obra — sempre visível se há projetos */}
+          <div className="relative">
+            <select
+              value={selectedProjectId ?? ''}
+              onChange={e => setSelectedProjectId(Number(e.target.value))}
+              disabled={loadingData}
+              className="appearance-none bg-[#1C1F26] border border-white/10 hover:border-blue-500/40 rounded-lg pl-3 pr-8 py-1.5 text-xs font-semibold text-zinc-200 focus:outline-none focus:border-blue-500/60 transition-colors cursor-pointer disabled:opacity-60"
+            >
+              {projects.map(p => (
+                <option key={p.id} value={p.id} className="bg-[#1C1F26]">
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            <ChevronRight
+              size={12}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 rotate-90 pointer-events-none"
+            />
+          </div>
+
+          {loadingData && (
+            <span className="text-[10px] text-zinc-500 animate-pulse">carregando...</span>
           )}
         </div>
+
         <button
           onClick={() => setShowNewTAP(true)}
           className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-xs font-bold text-white transition-all shadow-lg shadow-blue-500/20 flex-shrink-0"
@@ -537,12 +560,9 @@ export function DashboardPage() {
         <NewTAPModal
           onClose={() => setShowNewTAP(false)}
           onSaved={async () => {
-            const projs = await api.projects.list();
+            const projs: Project[] = await api.projects.list();
             setProjects(projs);
-            if (projs.length > 0) {
-              const newest = projs[projs.length - 1];
-              setSelectedProjectId(newest.id);
-            }
+            if (projs.length > 0) setSelectedProjectId(projs[projs.length - 1].id);
           }}
         />
       )}
