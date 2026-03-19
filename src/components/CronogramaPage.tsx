@@ -39,14 +39,14 @@ function StatusBadge({ status }: { status: string }) {
   const s = (status ?? '').toLowerCase();
   let cls = 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30';
   let label = status;
-  if (s === 'emitido' || s === 'aprovado')              { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; }
-  else if (s.includes('com rrt') || s === 'rrt')        { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; label = 'COM RRT'; }
-  else if (s.includes('com art') || s === 'art')        { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; label = 'COM ART'; }
-  else if (s === 'em elaboração' || s === 'elaboracao') { cls = 'bg-amber-500/15 text-amber-400 border-amber-500/30'; label = 'EM ELABORAÇÃO'; }
-  else if (s.includes('boleto'))                        { cls = 'bg-red-500/15 text-red-400 border-red-500/30'; label = 'AG. BOLETO PAGAMENTO'; }
-  else if (s.includes('envio'))                         { cls = 'bg-red-500/15 text-red-400 border-red-500/30'; label = 'AG. ENVIO DO PROJETO'; }
-  else if (s.includes('aguardando'))                    { cls = 'bg-blue-500/15 text-blue-400 border-blue-500/30'; label = 'AGUARDANDO ÓRGÃO'; }
-  else if (s === 'pendente')                            { cls = 'bg-amber-500/15 text-amber-400 border-amber-500/30'; label = 'PENDENTE'; }
+  if (s === 'emitido' || s === 'aprovado')               { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; }
+  else if (s.includes('com rrt') || s === 'rrt')         { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; label = 'COM RRT'; }
+  else if (s.includes('com art') || s === 'art')         { cls = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'; label = 'COM ART'; }
+  else if (s === 'em elaboração' || s === 'elaboracao')  { cls = 'bg-amber-500/15 text-amber-400 border-amber-500/30'; label = 'EM ELABORAÇÃO'; }
+  else if (s.includes('boleto'))                         { cls = 'bg-red-500/15 text-red-400 border-red-500/30'; label = 'AG. BOLETO'; }
+  else if (s.includes('envio'))                          { cls = 'bg-red-500/15 text-red-400 border-red-500/30'; label = 'AG. ENVIO'; }
+  else if (s.includes('aguardando'))                     { cls = 'bg-blue-500/15 text-blue-400 border-blue-500/30'; label = 'AGUARDANDO ÓRGÃO'; }
+  else if (s === 'pendente')                             { cls = 'bg-amber-500/15 text-amber-400 border-amber-500/30'; label = 'PENDENTE'; }
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${cls}`}>
       {label}
@@ -162,7 +162,8 @@ export function CronogramaPage() {
           const col = progressColor(item.progress);
           const labels = ['Em andamento', 'Quase concluído', 'Iniciada'];
           return (
-            <div key={item.id} className="bg-[#1C1F26] border border-white/5 rounded-xl p-4 flex flex-col gap-1"
+            <div key={item.id}
+              className="bg-[#1C1F26] border border-white/5 rounded-xl p-4 flex flex-col gap-1"
               style={{ borderTopColor: col, borderTopWidth: 2 }}>
               <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest truncate">{item.name}</p>
               <p className="text-2xl font-black" style={{ color: col }}>{item.progress}%</p>

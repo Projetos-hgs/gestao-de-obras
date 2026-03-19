@@ -484,6 +484,7 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       force: true,
+      include: ['react', 'react-dom', 'react-dom/client', 'react-router-dom', 'lucide-react'],
     },
   };
 });
