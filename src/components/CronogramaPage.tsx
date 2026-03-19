@@ -432,43 +432,81 @@ export function CronogramaPage() {
 
       {/* ── ABA: Contratos ── */}
       {activeTab === 'contracts' && (
-        <div className="bg-[#181B22] border border-white/5 rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-white/5">
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Contratos</p>
-          </div>
+        <div>
+          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
+            Prestadores e Contratos
+          </p>
           {contracts.length === 0 ? (
             <EmptyState message="Nenhum contrato cadastrado." />
           ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-white/5">
-                  {['Empresa', 'Escopo', 'Valor', 'Prazo', 'Status'].map(h => (
-                    <th key={h} className="px-4 py-2.5 text-left text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {contracts.map(c => (
-                  <tr key={c.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
-                    <td className="px-4 py-3 text-zinc-200 font-medium">{c.company}</td>
-                    <td className="px-4 py-3 text-zinc-400">{c.scope}</td>
-                    <td className="px-4 py-3 text-zinc-300 font-semibold">{fmtBudget(String(c.value))}</td>
-                    <td className="px-4 py-3 text-zinc-500">{fmtDate(c.deadline)}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                        c.status === 'ativo' || c.status === 'Ativo'
-                          ? 'bg-emerald-500/10 text-emerald-400'
-                          : c.status === 'pendente' || c.status === 'Pendente'
-                          ? 'bg-amber-500/10 text-amber-400'
-                          : 'bg-zinc-500/10 text-zinc-400'
-                      }`}>
-                        {c.status}
-                      </span>
-                    </td>
+            <div className="rounded-xl overflow-hidden border border-white/5">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-white/5 bg-[#181B22]">
+                    {['Empresa', 'Escopo', 'Contrato', 'Valor', 'Pagamento', 'Prazo'].map(h => (
+                      <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-zinc-500 uppercase tracking-widest whitespace-nowrap">
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {contracts.map((c, i) => {
+                    const signed = c.signed ?? c.status === 'ativo' ?? null;
+                    const hasValue = c.value && Number(c.value) > 0;
+                    const hasPrazo = c.deadline || c.duration_days;
+                    return (
+                      <tr
+                        key={c.id}
+                        className={`border-b border-white/5 last:border-0 transition-colors hover:bg-white/[0.02] ${i % 2 === 0 ? 'bg-[#16191F]' : 'bg-[#181B22]'}`}
+                      >
+                        {/* Empresa */}
+                        <td className="px-4 py-3.5 font-bold text-white whitespace-nowrap">{c.company}</td>
+
+                        {/* Escopo */}
+                        <td className="px-4 py-3.5 text-zinc-400 max-w-xs">{c.scope || c.description || '—'}</td>
+
+                        {/* Contrato — SIM / NÃO / traço */}
+                        <td className="px-4 py-3.5">
+                          {signed === true || signed === 'sim' || signed === 'yes' ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 uppercase">SIM</span>
+                          ) : signed === false || signed === 'não' || signed === 'nao' || signed === 'no' ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25 uppercase">NÃO</span>
+                          ) : (
+                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-zinc-800 text-zinc-500 text-xs">–</span>
+                          )}
+                        </td>
+
+                        {/* Valor */}
+                        <td className="px-4 py-3.5 font-bold whitespace-nowrap">
+                          {hasValue ? (
+                            <span className="text-emerald-400">{fmtBudget(String(c.value))}</span>
+                          ) : (
+                            <span className="text-zinc-600">—</span>
+                          )}
+                        </td>
+
+                        {/* Pagamento */}
+                        <td className="px-4 py-3.5 text-zinc-400 whitespace-nowrap">
+                          {c.payment_terms || c.installments
+                            ? (c.installments ? `${c.installments} parcelas` : c.payment_terms)
+                            : <span className="text-zinc-600">—</span>}
+                        </td>
+
+                        {/* Prazo */}
+                        <td className="px-4 py-3.5 text-zinc-400 whitespace-nowrap">
+                          {hasPrazo ? (
+                            c.duration_days ? `${c.duration_days} dias` : fmtDate(c.deadline)
+                          ) : (
+                            <span className="text-zinc-600">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
